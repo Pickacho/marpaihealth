@@ -19,24 +19,27 @@ groupadd docker
 sudo service docker restart
 #Add your user to the docker group 
 sudo usermod -aG docker  ec2-user
-# #activate the changes to groups
-sleep 1s ;newgrp docker &&  exit
+# # #activate the changes to groups
+echo "Before newgrp"
+/usr/bin/newgrp docker <<EONG
+echo "hello from within newgrp"
+id
+EONG
+echo "After newgrp"
+# newgrp docker
 # # Test for working docker
 docker run hello-world
 mkdir /home/ec2-user/postgresql/data
-
-docker run --name postgresql -e POSTGRES_USER=ran -e POSTGRES_PASSWORD=marpaihealth -p 5432:5432 -v /home/ec2-user/postgresql/data:/var/lib/postgresql/data -d postgres
-
 mkdir /home/ec2-user/postgresql/pgadmin
+chown -R  5050:5050 /home/ec2-user/postgresql/pgadmin
 
-docker run --name my-pgadmin -p 82:80  -e 'PGADMIN_DEFAULT_EMAIL=admin@admin.admin' -e 'PGADMIN_DEFAULT_PASSWORD=postgresmaster' -d dpage/pgadmin4
+docker run  --rm  --name postgresql -e POSTGRES_USER=ran -e POSTGRES_PASSWORD=marpaihealth -p 5432:5432 -v /home/ec2-user/postgresql/data:/var/lib/postgresql/data -d postgres
+docker run --rm --name my-pgadmin -p 80:80   --memory="0.3g" --cpus="0.3" -v /home/ec2-user/postgresql/pgadmin/var/lib/pgadmin/:/var/lib/pgadmin  -v "/home/ec2-user/postgresql/pgadmin/home/:$HOME"  -e 'PGADMIN_DEFAULT_EMAIL=admin@admin.admin' -e 'PGADMIN_DEFAULT_PASSWORD=postgresmaster' -d dpage/pgadmin4
 
-# docker run --rm --name my-pgadmin -p 82:80  -v "/home/ec2-user/postgresql/pgadmin/var/lib/pgadmin/:/var/lib/pgadmin" \
-# -v "$HOME:$HOME" \ -e 'PGADMIN_DEFAULT_EMAIL=admin@admin.admin' -e 'PGADMIN_DEFAULT_PASSWORD=postgresmaster' -d dpage/pgadmin4
 
 #get postgresql container ip for PGadmin connection
-docker inspect --format="{{json .NetworkSettings.Networks}}"  postgresql | grep "IPAddress"
-
+containerIP=`docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' postgresql`
+echo use $containerIP as postgres instance ip
 
 
 # docker network create jenkins
@@ -56,9 +59,9 @@ docker inspect --format="{{json .NetworkSettings.Networks}}"  postgresql | grep 
 #   --storage-driver overlay2
 
 
-# wget https://github.com/Pickacho/marpaihealth/blob/ae79b89873ced22e6b99190da4f4edad1212cd6f/Dockerfile -O /home/ec2-user/jenkins/Dockerfile
-# cd /home/ec2-user/jenkins/
-# docker build -t myjenkins-blueocean:2.332.2-1 .
+wget https://raw.githubusercontent.com/Pickacho/marpaihealth/master/Dockerfile -O /home/ec2-user/jenkins/Dockerfile
+cd /home/ec2-user/jenkins/
+docker build -t myjenkins-blueocean:2.332.2-1 .
 
 # cat << EOF > /home/ec2-user/jenkins/Dockerfile
 # FROM jenkins/jenkins:2.332.2-jdk11
@@ -75,22 +78,21 @@ docker inspect --format="{{json .NetworkSettings.Networks}}"  postgresql | grep 
 # RUN jenkins-plugin-cli --plugins "blueocean:1.25.3 docker-workflow:1.28"
 # EOF
 
+docker run \
+  --name jenkins-blueocean \
+  --rm \
+  --detach \
+  --network jenkins \
+  --env DOCKER_HOST=tcp://docker:2376 \
+  --env DOCKER_CERT_PATH=/certs/client \
+  --env DOCKER_TLS_VERIFY=1 \
+  --publish 8080:8080 \
+  --publish 50000:50000 \
+  --volume jenkins-data:/var/jenkins_home \
+  --volume jenkins-docker-certs:/certs/client:ro \
+  myjenkins-blueocean:2.332.2-1 
 
-# docker build -t myjenkins-blueocean:2.332.2-1 .
+sleep 20 
+ docker exec -it jenkins-blueocean  cat /var/jenkins_home/secrets/initialAdminPassword  ; echo ""
 
-# docker run \
-#   --name jenkins-blueocean \
-#   --rm \
-#   --detach \
-#   --network jenkins \
-#   --env DOCKER_HOST=tcp://docker:2376 \
-#   --env DOCKER_CERT_PATH=/certs/client \
-#   --env DOCKER_TLS_VERIFY=1 \
-#   --publish 8080:8080 \
-#   --publish 50000:50000 \
-#   --volume jenkins-data:/var/jenkins_home \
-#   --volume jenkins-docker-certs:/certs/client:ro \
-#   myjenkins-blueocean:2.332.2-1 
-
-
-#  docker exec -it jenkins-blueocean  cat /var/jenkins_home/secrets/initialAdminPassword  ; echo ""
+#  1807b2090c00428581aff010c5c3fb2d
