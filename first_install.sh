@@ -1,18 +1,18 @@
-/usr/bin/bash
-sudo yum update -y
-sudo yum install -y yum-utils
-sudo yum install docker
+#!/bin/bash
+yum update -y
+yum install -y yum-utils
+yum install docker -y
 wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) 
-sudo mv docker-compose-$(uname -s)-$(uname -m) /usr/local/bin/docker-compose
-sudo chmod -v +x /usr/local/bin/docker-compose
-sudo systemctl enable docker.service
-sudo systemctl start docker.service
-sudo systemctl enable docker.service
-sudo systemctl enable containerd.service
+mv docker-compose-$(uname -s)-$(uname -m) /usr/local/bin/docker-compose
+chmod -v +x /usr/local/bin/docker-compose
+systemctl enable docker.service
+systemctl start docker.service
+systemctl enable docker.service
+systemctl enable containerd.service
 #Create the docker group.
-sudo groupadd docker
+groupadd docker
 #Add your user to the docker group 
-sudo usermod -aG docker $USER
+usermod -aG docker $USER
 #activate the changes to groups
 newgrp docker 
 # Test for working docker
@@ -50,19 +50,23 @@ docker run \
   --storage-driver overlay2
 
 
+wget https://github.com/Pickacho/marpaihealth/blob/ae79b89873ced22e6b99190da4f4edad1212cd6f/Dockerfile -O /home/ec2-user/jenkins/Dockerfile
+cd /home/ec2-user/jenkins/
+docker build -t myjenkins-blueocean:2.332.2-1 .
+
 cat << EOF > /home/ec2-user/jenkins/Dockerfile
-  FROM jenkins/jenkins:2.332.2-jdk11
-  USER root
-  RUN apt-get update && apt-get install -y lsb-release
-  RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc \
-    https://download.docker.com/linux/debian/gpg
-  RUN echo "deb [arch=$(dpkg --print-architecture) \
-    signed-by=/usr/share/keyrings/docker-archive-keyring.asc] \
-    https://download.docker.com/linux/debian \
-    $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
-  RUN apt-get update && apt-get install -y docker-ce-cli
-  USER jenkins
-  RUN jenkins-plugin-cli --plugins "blueocean:1.25.3 docker-workflow:1.28"
+FROM jenkins/jenkins:2.332.2-jdk11
+USER root
+RUN apt-get update && apt-get install -y lsb-release
+RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc \
+https://download.docker.com/linux/debian/gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) \
+signed-by=/usr/share/keyrings/docker-archive-keyring.asc] \
+https://download.docker.com/linux/debian \
+$(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+RUN apt-get update && apt-get install -y docker-ce-cli
+USER jenkins
+RUN jenkins-plugin-cli --plugins "blueocean:1.25.3 docker-workflow:1.28"
 EOF
 
 
@@ -82,4 +86,3 @@ docker run \
 
 
  docker exec -it jenkins-blueocean  cat /var/jenkins_home/secrets/initialAdminPassword  ; echo ""
- 
