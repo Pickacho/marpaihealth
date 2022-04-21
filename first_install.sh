@@ -64,7 +64,7 @@ cat << EOF > /home/ec2-user/jenkins/Dockerfile
   USER jenkins
   RUN jenkins-plugin-cli --plugins "blueocean:1.25.3 docker-workflow:1.28"
 EOF
-
+docker build -t myjenkins-blueocean:2.332.2-1 .
 
 docker run \
   --name jenkins-blueocean \
