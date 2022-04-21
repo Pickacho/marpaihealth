@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 #!/bin/bash
 yum update -y
 yum install -y yum-utils
 yum install docker -y
+=======
+#!/usr/bin/bash
+sudo yum update -y
+sudo yum install -y yum-utils
+sudo yum install docker
+>>>>>>> f6a89f894b93099cfa05a76b9565316e8e4b79a2
 wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) 
 mv docker-compose-$(uname -s)-$(uname -m) /usr/local/bin/docker-compose
 chmod -v +x /usr/local/bin/docker-compose
@@ -68,7 +75,7 @@ RUN apt-get update && apt-get install -y docker-ce-cli
 USER jenkins
 RUN jenkins-plugin-cli --plugins "blueocean:1.25.3 docker-workflow:1.28"
 EOF
-
+docker build -t myjenkins-blueocean:2.332.2-1 .
 
 docker run \
   --name jenkins-blueocean \
@@ -86,3 +93,7 @@ docker run \
 
 
  docker exec -it jenkins-blueocean  cat /var/jenkins_home/secrets/initialAdminPassword  ; echo ""
+<<<<<<< HEAD
+=======
+ 
+>>>>>>> f6a89f894b93099cfa05a76b9565316e8e4b79a2
