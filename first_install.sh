@@ -31,6 +31,7 @@ echo "After newgrp"
 docker run hello-world
 mkdir -p /home/ec2-user/postgresql/data
 mkdir -p /home/ec2-user/postgresql/pgadmin
+mkdir -p -p /home/ec2-user/jenkins/
 chown -R  5050:5050 /home/ec2-user/postgresql/pgadmin
 
 docker run  --rm  --name postgresql -e POSTGRES_USER=ran -e POSTGRES_PASSWORD=marpaihealth -p 5432:5432 -v /home/ec2-user/postgresql/data:/var/lib/postgresql/data -d postgres
